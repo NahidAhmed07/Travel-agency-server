@@ -88,7 +88,9 @@ async function run() {
         myServices.forEach((service, index) => {
           service.registerDate = myOrders[index].registerDate;
           service.data = myOrders[index].date;
+          service.status = myOrders[index].status;
         });
+
         res.send(myServices);
       } else {
         res.json({ orderNotFound: true });
