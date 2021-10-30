@@ -21,6 +21,7 @@ async function run() {
     const specialitiesCollection = database.collection("specialities");
     const servicesCollection = database.collection("services");
     const orderCollection = database.collection("orders_collection");
+    const postCollection = database.collection("foot_images");
 
     // get all specialties api
     app.get("/specialties", async (req, res) => {
@@ -28,11 +29,18 @@ async function run() {
       res.send(result);
     });
 
-    // get all servises api
+    // get all services api
     app.get("/services", async (req, res) => {
       const category = req.query.categories;
       const query = { categories: category };
       const result = await servicesCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // add a new services api
+    app.post("/services", async (req, res) => {
+      const service = req.body;
+      const result = await servicesCollection.insertOne(service);
       res.send(result);
     });
 
@@ -64,20 +72,27 @@ async function run() {
     app.get("/my_order/:uid", async (req, res) => {
       const uid = req.params.uid; // uid = userId
       const query = { userId: uid };
+      console.log("api hitting");
       // filter user all added service id
       const myOrders = await orderCollection.find(query).toArray();
-      const servicesId = [];
-      myOrders.forEach((order) => servicesId.push(order.serviceId));
-      // filter user added services from all services using service id
-      const serviceQuery = { serviceId: { $in: servicesId } };
-      const myServices = await servicesCollection.find(serviceQuery).toArray();
+      if (myOrders.length > 0) {
+        const servicesId = [];
+        myOrders.forEach((order) => servicesId.push(order.serviceId));
+        // filter user added services from all services using service id
+        const serviceQuery = { serviceId: { $in: servicesId } };
+        const myServices = await servicesCollection
+          .find(serviceQuery)
+          .toArray();
 
-      // added service register date and service date
-      myServices.forEach((service, index) => {
-        service.registerDate = myOrders[index].registerDate;
-        service.data = myOrders[index].date;
-      });
-      res.send(myServices);
+        // added service register date and service date
+        myServices.forEach((service, index) => {
+          service.registerDate = myOrders[index].registerDate;
+          service.data = myOrders[index].date;
+        });
+        res.send(myServices);
+      } else {
+        res.json({ orderNotFound: true });
+      }
     });
 
     // cancel order api
@@ -92,6 +107,29 @@ async function run() {
     // get all user order
     app.get("/all_order", async (req, res) => {
       const result = await orderCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    // update order approved state
+    app.put("/my_order/:sid/:uid", async (req, res) => {
+      // sid == serviceId and uid == userId
+      const sid = req.params.sid;
+      const uid = req.params.uid;
+
+      const filter = { userId: uid, serviceId: sid };
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await orderCollection.updateOne(filter, updateDoc, option);
+      res.json(result);
+    });
+
+    //  get footer post items
+    app.get("/post", async (req, res) => {
+      const result = await postCollection.find({}).toArray();
       res.send(result);
     });
   } finally {
