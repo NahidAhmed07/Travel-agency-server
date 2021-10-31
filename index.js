@@ -90,7 +90,6 @@ async function run() {
           service.data = myOrders[index].date;
           service.status = myOrders[index].status;
         });
-
         res.send(myServices);
       } else {
         res.json({ orderNotFound: true });
@@ -106,7 +105,7 @@ async function run() {
       res.json(result);
     });
 
-    // get all user order
+    // get all user order api
     app.get("/all_order", async (req, res) => {
       const result = await orderCollection.find({}).toArray();
       res.send(result);
@@ -114,10 +113,8 @@ async function run() {
 
     // update order approved state
     app.put("/my_order/:sid/:uid", async (req, res) => {
-      // sid == serviceId and uid == userId
-      const sid = req.params.sid;
-      const uid = req.params.uid;
-
+      const sid = req.params.sid; // sid == serviceId
+      const uid = req.params.uid; //and uid == userId
       const filter = { userId: uid, serviceId: sid };
       const option = { upsert: true };
       const updateDoc = {
@@ -129,7 +126,7 @@ async function run() {
       res.json(result);
     });
 
-    //  get footer post items
+    //  get customer review data items
     app.get("/post", async (req, res) => {
       const result = await postCollection.find({}).toArray();
       res.send(result);
